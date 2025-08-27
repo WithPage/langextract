@@ -39,6 +39,13 @@ _API_CONFIG_KEYS: Final[set[str]] = {
     'stop_sequences',
     'candidate_count',
 }
+try:
+  # pylint: disable=import-outside-toplevel
+  from google import genai
+except ImportError as e:
+  raise exceptions.InferenceConfigError(
+      'Failed to import google-genai. Reinstall: pip install langextract'
+  ) from e
 
 
 @router.register(
@@ -89,6 +96,7 @@ class GeminiLanguageModel(base_model.BaseLanguageModel):
       temperature: float = 0.0,
       max_workers: int = 10,
       fence_output: bool = False,
+      client: genai.Client | None = None,
       **kwargs,
   ) -> None:
     """Initialize the Gemini language model.
@@ -107,26 +115,23 @@ class GeminiLanguageModel(base_model.BaseLanguageModel):
         safety_settings, stop_sequences, candidate_count, system_instruction).
         See https://ai.google.dev/api/generate-content for details.
     """
-    try:
-      # pylint: disable=import-outside-toplevel
-      from google import genai
-    except ImportError as e:
-      raise exceptions.InferenceConfigError(
-          'Failed to import google-genai. Reinstall: pip install langextract'
-      ) from e
 
     self.model_id = model_id
     self.api_key = api_key
+    self.client = client
     self.gemini_schema = gemini_schema
     self.format_type = format_type
     self.temperature = temperature
     self.max_workers = max_workers
     self.fence_output = fence_output
 
-    if not self.api_key:
-      raise exceptions.InferenceConfigError('API key not provided.')
+    if self.client:
+      self._client = self.client
+    else:
+      if not self.api_key:
+        raise exceptions.InferenceConfigError('API key not provided.')
 
-    self._client = genai.Client(api_key=self.api_key)
+      self._client = genai.Client(api_key=self.api_key)
 
     super().__init__(
         constraint=schema.Constraint(constraint_type=schema.ConstraintType.NONE)

@@ -34,6 +34,7 @@ def extract(
     prompt_description: str | None = None,
     examples: typing.Sequence[typing.Any] | None = None,
     model_id: str = "gemini-2.5-flash",
+    client: typing.Any | None = None,
     api_key: str | None = None,
     language_model_type: typing.Type[typing.Any] | None = None,
     format_type: typing.Any = None,
@@ -67,6 +68,7 @@ def extract(
         is True), or an iterable of Document objects.
       prompt_description: Instructions for what to extract from the text.
       examples: List of ExampleData objects to guide the extraction.
+      client: Client for Gemini or other LLM services.
       api_key: API key for Gemini or other LLM services (can also use
         environment variable LANGEXTRACT_API_KEY). Cost considerations: Most
         APIs charge by token volume. Smaller max_char_buffer values increase the
@@ -220,6 +222,7 @@ def extract(
 
     base_lm_kwargs: dict[str, typing.Any] = {
         "api_key": api_key,
+        "client": client,
         "format_type": format_type,
         "temperature": temperature,
         "model_url": model_url,
